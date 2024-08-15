@@ -1,57 +1,63 @@
-import DeployButton from "@/components/DeployButton";
-import AuthButton from "@/components/AuthButton";
-import { createClient } from "@/utils/supabase/server";
-import FetchDataSteps from "@/components/tutorial/FetchDataSteps";
-import Header from "@/components/Header";
-import { redirect } from "next/navigation";
+'use client'
 
-export default async function ProtectedPage() {
-  const supabase = createClient();
+import React, { useState } from 'react'
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+interface Todo {
+  id: number
+  title: string
+  is_complete: boolean
+}
 
-  if (!user) {
-    return redirect("/login");
+export default function TodoList() {
+  const [todos, setTodos] = useState<Todo[]>([])
+  const [newTodo, setNewTodo] = useState('')
+
+  const addTodo = () => {
+    if (newTodo.trim()) {
+      setTodos([...todos, { id: Date.now(), title: newTodo.trim(), is_complete: false }])
+      setNewTodo('')
+    }
+  }
+
+  const toggleTodo = (id: number) => {
+    setTodos(todos.map(todo =>
+      todo.id === id ? { ...todo, is_complete: !todo.is_complete } : todo
+    ))
+  }
+
+  const deleteTodo = (id: number) => {
+    setTodos(todos.filter(todo => todo.id !== id))
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col gap-20 items-center">
-      <div className="w-full">
-        <div className="py-6 font-bold bg-purple-950 text-center">
-          This is a protected page that you can only see as an authenticated
-          user
-        </div>
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-4xl flex justify-between items-center p-3 text-sm">
-            <DeployButton />
-            <AuthButton />
-          </div>
-        </nav>
+    <div className="max-w-md mx-auto mt-8">
+      <h1 className="text-2xl font-bold mb-4">Todo List</h1>
+      <div className="flex mb-4">
+        <input
+          type="text"
+          value={newTodo}
+          onChange={(e) => setNewTodo(e.target.value)}
+          className="flex-grow p-2 border rounded-l"
+          placeholder="Add a new todo"
+        />
+        <button onClick={addTodo} className="bg-blue-500 text-white p-2 rounded-r">Add</button>
       </div>
-
-      <div className="flex-1 flex flex-col gap-20 max-w-4xl px-3">
-        <Header />
-        <main className="flex-1 flex flex-col gap-6">
-          <h2 className="font-bold text-4xl mb-4">Next steps</h2>
-          <FetchDataSteps />
-        </main>
-      </div>
-
-      <footer className="w-full border-t border-t-foreground/10 p-8 flex justify-center text-center text-xs">
-        <p>
-          Powered by{" "}
-          <a
-            href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-            target="_blank"
-            className="font-bold hover:underline"
-            rel="noreferrer"
-          >
-            Supabase
-          </a>
-        </p>
-      </footer>
+      <ul>
+        {todos.map(todo => (
+          <li key={todo.id} className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              checked={todo.is_complete}
+              onChange={() => toggleTodo(todo.id)}
+              className="mr-2"
+            />
+            <span className={`flex-grow ${todo.is_complete ? 'line-through text-gray-500' : ''}`}>
+              {todo.title}
+            </span>
+            <button onClick={() => deleteTodo(todo.id)} className="text-red-500">Delete</button>
+          </li>
+        ))}
+      </ul>
     </div>
-  );
+  )
 }
